@@ -3,12 +3,14 @@
 
 
 import { useCallback, useEffect, useState } from 'react';
-import {FileRejection, useDropzone} from 'react-dropzone';
+import {FileRejection, useDropzone } from 'react-dropzone';
 import { Card, CardContent } from '../ui/card';
 import { cn } from '@/lib/utils';
 import { RenderEmptyState, RenderErrorState, RenderUploadedState, RenderUploadingState } from './render-state';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
+import { useMakeUrl } from '@/hooks/useMakeUrl';
+
 
 
 
@@ -31,7 +33,10 @@ interface iAppProps {
   
 }
 
-function Uploader({value, onChange}: iAppProps) {
+function Uploader({ value, onChange }: iAppProps) {
+  
+  const fileUrl = useMakeUrl(value || '')
+
   const [fileState, setFileState] = useState<UploaderState>({
     id: null,
     file: null,
@@ -40,7 +45,8 @@ function Uploader({value, onChange}: iAppProps) {
     isDelation: false,
     error: false,
     fileType: "image",
-    key: value
+    key: value,
+    objectUrl: fileUrl
   })
 
 

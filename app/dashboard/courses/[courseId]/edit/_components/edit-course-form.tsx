@@ -1,51 +1,52 @@
 "use client"
 
-import { Button, buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { categories, CourseSchema, CourseSchemaType, status } from '@/lib/schemas';
-import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2, PlusIcon, SparkleIcon } from 'lucide-react';
-import Link from 'next/link';
-import {  useForm } from 'react-hook-form';
 import slugify from 'slugify';
-import { useState, useTransition } from 'react';
 import { levels } from '@/lib/schemas';
 import Editor from '@/components/text-editor/editor';
 import Uploader from '@/components/file-uploader/uploader';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useState, useTransition } from 'react';
+import { editCourse } from '@/lib/actions';
 import { tryCatch } from '@/lib/try-catch';
-import { createCourse } from '@/lib/actions';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { getEditType } from '@/app/data/admin/get-admin-course';
 
-const Create = () => {
+interface iAppProps {
+  sigleData: getEditType,
+}
+
+export function EditCourseForm({sigleData}: iAppProps) {
   const [slugging, setSlugging] = useState(false);
-  const form = useForm<CourseSchemaType>({
-    resolver: zodResolver(CourseSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      duration: 0,
-      category: "Technology",
-      slug: "",
-      status: "Draft",
-      fileKey: "",
-      level: "Beginner",
-      price: 0,
-    },
-  })
-
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
-
-
+   const form = useForm<CourseSchemaType>({
+      resolver: zodResolver(CourseSchema),
+      defaultValues: {
+        title: sigleData.title,
+        description: sigleData.description,
+        duration: sigleData.duration,
+        category: sigleData.category as CourseSchemaType['category'],
+        slug: sigleData.slug,
+        status: sigleData.status,
+        fileKey: sigleData.fileKey,
+        level: sigleData.level,
+        price: sigleData.price,
+      },
+   })
+  
   function onSubmit(values: CourseSchemaType) {
      console.log(values)
      // Do something with the form values.
     startTransition(async () => {
-      const { data, error } = await tryCatch(createCourse(values))
+      const { data, error } = await tryCatch(editCourse(values,sigleData.id))
       if (error) {
         toast.error('An error on clinet')
         return
@@ -61,25 +62,12 @@ const Create = () => {
 
      })
   }
-
+  
+  
+  
   return (
     <div>
-      <div className='my-4 flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>Create Course</h1>
-        <Link href='/dashboard/courses' className={buttonVariants({
-          variant: "outline", size: "sm"
-        })}>Go Courses Page</Link>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Basic Information</CardTitle>
-          <CardDescription>Provide information about a new Course</CardDescription>
-        </CardHeader>
-
-      <CardContent>
-       
-           <Form {...form}>
+       <Form {...form}>
                <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
               <FormField control={form.control} name='title' render={({field}) => (
                 <FormItem>
@@ -246,13 +234,9 @@ const Create = () => {
               <Button disabled={isPending} className='w-full' type='submit'> {isPending ? <>
               <Loader2 className='size-4 animate-spin'/> Loading...
               </> : <>
-              <PlusIcon className='size-4' /> Create Course</>}</Button>
+              <PlusIcon className='size-4' /> Update Course</>}</Button>
           </form>
           </Form>
-      </CardContent>
-      </Card>
     </div>
-  );
-};
-
-export default Create;
+  )
+}

@@ -2,14 +2,11 @@
 import { CourseSchema, CourseSchemaType } from '@/lib/schemas';
 import prisma from './db';
 import { ApiRespone } from './types';
-import { auth } from './auth';
-import { headers } from 'next/headers';
+import { requireAdmin } from '@/app/data/admin/require-admin';
 
-export async function createCourse(values: CourseSchemaType) : Promise<ApiRespone> {
+export async function createCourse(values: CourseSchemaType): Promise<ApiRespone> {
+   const session = await requireAdmin()
   try {
-    const session = await auth.api.getSession({
-    headers: await headers()
-  })
   const validation = CourseSchema.safeParse(values)
   if (!validation.success) {
     return {
@@ -36,3 +33,61 @@ export async function createCourse(values: CourseSchemaType) : Promise<ApiRespon
   }
 }
 }
+
+
+export async function deleteCourse(id: string) : Promise<ApiRespone> {
+ try {
+  await requireAdmin()
+  await prisma.course.delete({
+    where: {
+     id: id
+   }
+  })
+  
+  return {
+    status: 'success',
+    message: 'Course Deleted Successfully',
+  }
+ } catch {
+   return {
+    status: 'error',
+    message: 'Course Deleting Faild'
+  }
+ }
+}
+
+
+export async function editCourse(data: CourseSchemaType,courseId: string): Promise<ApiRespone> {
+  const user = await requireAdmin()
+
+  try {
+    const result = CourseSchema.safeParse(data)
+    if (!result.success) {
+      return {
+        message: 'invalid data type',
+        status: 'error'
+      }
+    }
+
+    await prisma.course.update({
+      where: {
+        id: courseId,
+        userId: user.user.id
+      },
+      data: {
+        ...result.data
+      }
+    })
+
+    return {
+      message: 'course updated successfully',
+      status: 'success'
+    }
+  } catch  {
+    return {
+      status: 'error',
+      message: 'Failed to Update Course'
+    }
+  }
+}
+
