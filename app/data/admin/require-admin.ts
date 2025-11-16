@@ -8,7 +8,7 @@ export async function requireAdmin() {
   })
 
   if (!session) {
-    return redirect('/')
+    return redirect('/sign-in')
   }
 
   if (session.user.role !== 'admin') {
